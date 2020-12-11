@@ -681,6 +681,7 @@ with_payload
 with_logo
 with_target_platform
 enable_sm_multimem
+enable_sm_hpme
 enable_sm
 enable_sm_rs
 enable_fp_emulation
@@ -4379,6 +4380,14 @@ $as_echo "#define PLUGIN_ENABLE_MULTIMEM /**/" >>confdefs.h
 fi
 
 
+# Check whether --enable-sm_hpme was given.
+if test "${enable_sm_hpme+set}" = set; then :
+  enableval=$enable_sm_hpme;
+$as_echo "#define PLUGIN_ENABLE_HPME/**/" >>confdefs.h
+
+fi
+
+
       };
 
       # Optional subprojects add --enable-subproject command line
@@ -4485,6 +4494,13 @@ fi
 if test "${enable_sm_multimem+set}" = set; then :
   enableval=$enable_sm_multimem;
 $as_echo "#define PLUGIN_ENABLE_MULTIMEM /**/" >>confdefs.h
+
+fi
+
+# Check whether --enable-sm_hpme was given.
+if test "${enable_sm_hpme+set}" = set; then :
+  enableval=$enable_sm_hpme;
+$as_echo "#define PLUGIN_ENABLE_HPME/**/" >>confdefs.h
 
 fi
 

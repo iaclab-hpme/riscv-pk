@@ -313,14 +313,14 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
 {
   uintptr_t epm_start, epm_end;
 
-  /* printm("[create args info]: \r\n\tepm_addr: %llx\r\n\tepmsize: %llx\r\n\tutm_addr: %llx\r\n\tutmsize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n", */
-  /*        args->epm_region.paddr, */
-  /*        args->epm_region.size, */
-  /*        args->utm_region.paddr, */
-  /*        args->utm_region.size, */
-  /*        args->runtime_paddr, */
-  /*        args->user_paddr, */
-  /*        args->free_paddr); */
+  // printm("[create args info]: \r\n\tepm_addr: %llx\r\n\tepmsize: %llx\r\n\tutm_addr: %llx\r\n\tutmsize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n",
+  //       args->epm_region.paddr,
+  //       args->epm_region.size,
+  //       args->utm_region.paddr,
+  //       args->utm_region.size,
+  //       args->runtime_paddr,
+  //       args->user_paddr,
+  //       args->free_paddr);
 
   // check if physical addresses are valid
   if (args->epm_region.size <= 0)
@@ -338,16 +338,16 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
   epm_end = args->epm_region.paddr + args->epm_region.size;
 
   // check if physical addresses are in the range
-  if (args->runtime_paddr < epm_start ||
-      args->runtime_paddr >= epm_end)
-    return 0;
-  if (args->user_paddr < epm_start ||
-      args->user_paddr >= epm_end)
-    return 0;
-  if (args->free_paddr < epm_start ||
-      args->free_paddr > epm_end)
-      // note: free_paddr == epm_end if there's no free memory
-    return 0;
+  // if (args->runtime_paddr < epm_start ||
+  //     args->runtime_paddr >= epm_end)
+  //   return 0;
+  // if (args->user_paddr < epm_start ||
+  //     args->user_paddr >= epm_end)
+  //   return 0;
+  // if (args->free_paddr < epm_start ||
+  //     args->free_paddr > epm_end)
+  //     // note: free_paddr == epm_end if there's no free memory
+  //   return 0;
 
   // check the order of physical addresses
   if (args->runtime_paddr > args->user_paddr)
@@ -406,6 +406,8 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   if(encl_alloc_eid(&eid) != ENCLAVE_SUCCESS)
     goto error;
 
+  printm("[DEBUG] epm: base=0x%lx, size=%d\r\n", base, size);
+
   // create a PMP region bound to the enclave
   ret = ENCLAVE_PMP_FAILURE;
   if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region, 0))
@@ -442,26 +444,32 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   /* Platform create happens as the last thing before hashing/etc since
      it may modify the enclave struct */
   ret = platform_create_enclave(&enclaves[eid]);
-  if(ret != ENCLAVE_SUCCESS)
+  if(ret != ENCLAVE_SUCCESS){
+    printm("[SM] platform_create_enclave failed, ret=%d\r\n", ret);
     goto unset_region;
+  }
 
   /* Validate memory, prepare hash and signature for attestation */
   spinlock_lock(&encl_lock); // FIXME This should error for second enter.
   ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
-  if(ret != ENCLAVE_SUCCESS)
+  if(ret != ENCLAVE_SUCCESS){
+    printm("[SM] validate_and_hash_enclave failed, ret=%d\r\n", ret);
     goto unlock;
+  }
 
   enclaves[eid].state = FRESH;
   /* EIDs are unsigned int in size, copy via simple copy */
 
   ret = copy_word_to_host((uintptr_t)eidptr, (uintptr_t)eid);
   if (ret) {
+    printm("[SM] copy_word_to_host failed, ret=%d\r\n", ret);
     ret = ENCLAVE_ILLEGAL_ARGUMENT;
     goto unlock;
   }
 
   spinlock_unlock(&encl_lock);
+  printm("[SM] create_enclave success\n");
   return ENCLAVE_SUCCESS;
 
 unlock:

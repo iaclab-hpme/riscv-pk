@@ -45,6 +45,9 @@
 /* Enable multimem plugin */
 #undef PLUGIN_ENABLE_MULTIMEM
 
+/* Enable hpme plugin */
+#undef PLUGIN_ENABLE_HPME
+
 /* Define if subproject MCPPBS_SPROJ_NORM is enabled */
 #undef SM_ENABLED
 

@@ -7,6 +7,7 @@
 
 /* PLUGIN IDs */
 #define PLUGIN_ID_MULTIMEM  0x1
+#define PLUGIN_ID_HPME		0x2
 
 #ifdef PLUGIN_ENABLE_MULTIMEM
   #include "plugins/multimem.h"
@@ -18,7 +19,9 @@ call_plugin(
     uintptr_t plugin_id,
     uintptr_t call_id,
     uintptr_t arg0,
-    uintptr_t arg1
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3
     );
 
 #endif

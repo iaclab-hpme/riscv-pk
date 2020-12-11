@@ -214,7 +214,7 @@ void mcall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
 {
   write_csr(mepc, mepc + 4);
 
-  uintptr_t n = regs[17], arg0 = regs[10], arg1 = regs[11], arg2 = regs[12], arg3 = regs[13], retval, ipi_type;
+  uintptr_t n = regs[17], arg0 = regs[10], arg1 = regs[11], arg2 = regs[12], arg3 = regs[13], arg4 = regs[14], arg5 = regs[15], retval, ipi_type;
 
   switch (n)
   {
@@ -281,7 +281,7 @@ send_ipi:
       retval = mcall_sm_random();
       break;
     case SBI_SM_CALL_PLUGIN:
-      retval = mcall_sm_call_plugin(arg0, arg1, arg2, arg3);
+      retval = mcall_sm_call_plugin(arg0, arg1, arg2, arg3, arg4, arg5);
       break;
     case SBI_SM_NOT_IMPLEMENTED:
       retval = mcall_sm_not_implemented(regs, arg0);

@@ -18,16 +18,20 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
+    printm("[SM] an enclave cannot call this SBI\n");
     return ENCLAVE_SBI_PROHIBITED;
   }
 
   ret = copy_enclave_create_args(create_args,
                        &create_args_local);
 
-  if( ret != ENCLAVE_SUCCESS )
+  if( ret != ENCLAVE_SUCCESS ){
+    printm("[SM] copy_enclave_create_args error, ret=%d\n", ret);
     return ret;
+  }
 
   ret = create_enclave(create_args_local);
+  printm("[SM] ret=%d\n", ret);
   return ret;
 }
 
@@ -125,13 +129,13 @@ uintptr_t mcall_sm_random()
   return platform_random();
 }
 
-uintptr_t mcall_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1)
+uintptr_t mcall_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3)
 {
   if(!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  return call_plugin(cpu_get_enclave_id(), plugin_id, call_id, arg0, arg1);
+  return call_plugin(cpu_get_enclave_id(), plugin_id, call_id, arg0, arg1, arg2, arg3);
 }
 
 /* TODO: this should be removed in the future. */

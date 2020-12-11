@@ -38,6 +38,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
     }
     uintptr_t vpn;
     uintptr_t phys_addr = (*walk >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
+    // printm("[DEBUG] walk=0x%lx, *walk=0x%lx, phys_addr=0x%lx\n",walk, *walk, phys_addr);
 
     /* Check for blatently invalid mappings */
     int map_in_epm = (phys_addr >= epm_start &&
@@ -47,6 +48,8 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
 
     /* EPM may map anything, UTM may not map pgtables */
     if(!map_in_epm && (!map_in_utm || level != 1)){
+      printm("map_in_epm = %d, phys_addr=0x%lx, epm_start=0x%lx, emp_size=0x%lx\n",map_in_epm, phys_addr, epm_start, epm_size);
+      printm("map_in_utm = %d, level = %d\n", map_in_utm, level);
       goto fatal_bail;
     }
 
@@ -64,7 +67,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
     {
 
       hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
-      //printm("VA hashed: 0x%lx\n", va_start);
+      // printm("VA hashed: 0x%lx\n", va_start);
       contiguous = 1;
     }
 
@@ -91,6 +94,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
 
       /* Validate U bit */
       if(in_user && !(*walk & PTE_U)){
+        printm("U bit validate failed, *walk=0x%lx\n", *walk);
         goto fatal_bail;
       }
 
@@ -98,12 +102,14 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
       if(va_start >= encl->params.untrusted_ptr &&
          va_start < (encl->params.untrusted_ptr + encl->params.untrusted_size) &&
          !map_in_utm){
+        printm("vaddr in utm, paddr not in UTM\n");
         goto fatal_bail;
       }
 
       /* Do linear mapping validation */
       if(in_runtime){
         if(phys_addr <= *runtime_max_seen){
+          printm("map not in linear, phys_addr=0x%lx, *runtime_max_seen=0x%lx\n", phys_addr, runtime_max_seen);
           goto fatal_bail;
         }
         else{
@@ -112,6 +118,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
       }
       else if(in_user){
         if(phys_addr <= *user_max_seen){
+          printm("map not in linear, phys_addr=0x%lx, *user_max_seen=0x%lx\n", phys_addr, user_max_seen);
           goto fatal_bail;
         }
         else{
@@ -122,7 +129,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
         // we checked this above, its OK
       }
       else{
-        //printm("BAD GENERIC MAP %x %x %x\n", in_runtime, in_user, map_in_utm);
+        printm("BAD GENERIC MAP %x %x %x\n", in_runtime, in_user, map_in_utm);
         goto fatal_bail;
       }
 
@@ -133,7 +140,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
 
 
 
-      //printm("PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr);
+      // printm("PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr);
     }
     else
     {
@@ -182,6 +189,7 @@ enclave_ret_code validate_and_hash_enclave(struct enclave* enclave){
   uintptr_t user_max_seen=0;;
 
   // hash the epm contents including the virtual addresses
+  printm("[DEBUG] enclave->encl_satp=0x%lx\n", enclave->encl_satp);
   int valid = validate_and_hash_epm(&hash_ctx,
                                     ptlevel,
                                     (pte_t*) (enclave->encl_satp << RISCV_PGSHIFT),
